@@ -1,0 +1,38 @@
+---
+- name: install and start jenkins
+  hosts: web
+  become: yes
+
+  tasks:
+    - name: add redhat-stable jenkins repo
+      ansible.builtin.get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+    - name: import jenkins public pgp keys
+      ansible.builtin.rpm_key:
+        key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+        state: present
+    - name: update all packages
+      yum:
+        name: '*'
+        state: latest
+    - name: install dependencies 
+      command: amazon-linux-extras install java-openjdk11 -y
+    - name: install jenkins
+      yum:
+        name:
+          - jenkins
+    - name: run systemctl daemon-reload
+      ansible.builtin.systemd:
+        daemon_reload: yes
+    - name: start jenkins
+      ansible.builtin.systemd:
+        name: jenkins
+        state: started
+    - name: get initialAdminPassword
+      command: cat /var/lib/jenkins/secrets/initialAdminPassword
+      changed_when: false
+      register: initialPassword
+    - name: print initialAdminPassword
+      debug:
+        var: initialPassword.stdout_lines
