@@ -20,6 +20,15 @@
       service:
         name: nginx
         state: started
+    - name: get public IP
+      uri:
+        url: https://api.ipify.org?format=json
+        method: Get
+      changed_when: false
+      register: public_ip
+    - name: print public IP
+      debug:
+        msg: "{{ public_ip.json.ip }}"
   
   handlers:
     - name: restart nginx
