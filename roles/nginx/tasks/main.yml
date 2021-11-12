@@ -1,0 +1,16 @@
+- name: install nginx
+  command: amazon-linux-extras install nginx1 -y
+- name: copy config for jenkins routing
+  template: "src=nginx.conf dest='/etc/nginx/nginx.conf' mode=preserve"
+  notify: restart nginx
+- name: start nginx
+  service: "name=nginx state=started"
+- name: get public IP
+  uri:
+    url: https://api.ipify.org?format=json
+    method: Get
+  changed_when: false
+  register: public_ip
+- name: print public IP
+  debug:
+    msg: "{{ public_ip.json.ip }}"
