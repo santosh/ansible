@@ -24,13 +24,13 @@
 ## 192.168.1.110
 
 [web]
-10.2.1.85
+10.2.1.10
 
 [jenkins]
-10.2.1.85
+10.2.1.10
 
 [vpn]
-10.2.1.85
+10.2.1.10
 
 # If you have multiple hosts following a pattern you can specify
 # them like this:
