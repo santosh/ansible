@@ -1,0 +1,11 @@
+# Warning: This is a development build, please see https://www.rabbitmq.com/production-checklist.html
+# for a production ready build.
+
+- name: install rabbitmq-server
+  yum: "name=rabbitmq-server state=present"
+
+- name: start rabbitmq-server
+  service: "name=rabbitmq-server state=started"
+
+- name: enable rabbitmq-server to start on boot
+  service: "name=rabbitmq-server enabled=yes"
