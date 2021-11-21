@@ -1,10 +1,15 @@
-- name: install nginx
-  command: amazon-linux-extras install nginx1 -y
+- include: debian.yml
+  when: ansible_os_family == "Debian"
+- include: redhat.yml
+  when: ansible_os_family == "RedHat"
+
 - name: copy nginx.conf
-  copy: "src=nginx.conf dest='/etc/nginx/nginx.conf' mode=preserve"
+  copy: src=nginx.conf dest=/etc/nginx/nginx.conf mode=preserve
   notify: restart nginx
-- name: start nginx
-  service: "name=nginx state=started"
+
+- name: start nginx and enable at startup
+  service: name=nginx state=started enabled=yes
+
 - name: get public IP
   uri:
     url: https://api.ipify.org?format=json
