@@ -1,5 +1,7 @@
 ---
-- hosts: 
+- name: install and start nginx
+  become: yes
+  hosts:
     - web
   roles:
     - nginx

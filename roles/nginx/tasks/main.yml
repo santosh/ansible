@@ -1,7 +1,7 @@
 - name: install nginx
   command: amazon-linux-extras install nginx1 -y
-- name: copy config for jenkins routing
-  template: "src=nginx.conf dest='/etc/nginx/nginx.conf' mode=preserve"
+- name: copy nginx.conf
+  copy: "src=nginx.conf dest='/etc/nginx/nginx.conf' mode=preserve"
   notify: restart nginx
 - name: start nginx
   service: "name=nginx state=started"
