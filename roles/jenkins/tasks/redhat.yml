@@ -1,0 +1,14 @@
+- name: add redhat-stable jenkins repo on RedHat
+  ansible.builtin.get_url:
+    url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+    dest: /etc/yum.repos.d/jenkins.repo
+- name: import jenkins public pgp keys
+  ansible.builtin.rpm_key:
+    key: https://pkg.jenkins.io/redhat-stable/jenkins.io.key
+    state: present
+- name: update all packages on RedHat
+  yum: "name='*' state=latest"
+- name: install dependencies on RedHat
+  command: amazon-linux-extras install epel java-openjdk11 -y
+- name: install jenkins on RedHat
+  yum: name=jenkins state=latest

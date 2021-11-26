@@ -1,0 +1,11 @@
+- name: import jenkins public pgp keys
+  apt_key: url=https://pkg.jenkins.io/debian-stable/jenkins.io.key state=present
+- name: add debian-stable jenkins repo on Debian
+  command: sudo sh -c 'echo deb https://pkg.jenkins.io/debian-stable binary/ > /etc/apt/sources.list.d/jenkins.list'
+- name: update all packages on Debian
+  apt: "upgrade=yes update_cache=yes cache_valid_time=86400"
+- name: install dependencies & jenkins on Debian
+  apt: name={{ item }} state=present
+  with_items:
+    - openjdk-11-jdk
+    - jenkins
