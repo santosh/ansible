@@ -1,4 +1,6 @@
 - name: install nginx on debian
   apt: name=nginx state=present
+- name: create nginx group
+  group: name=nginx state=present
 - name: create nginx user
   user: name=nginx system=yes create_home=no shell=/bin/false group=nginx state=present
