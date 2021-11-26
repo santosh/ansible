@@ -3,6 +3,10 @@
 - include: redhat.yml
   when: ansible_os_family == "RedHat"
 
+- name: ensure /etc/nginx/conf.d/ directory exists
+  file: path=/etc/nginx/conf.d state=directory recurse=yes
+- name: copy jenkins nginx config
+  copy: src=jenkins.conf dest=/etc/nginx/conf.d/ci.santoshk.dev.conf
 - name: run systemctl daemon-reload
   ansible.builtin.systemd:
     daemon_reload: yes
