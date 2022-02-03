@@ -34,7 +34,7 @@ http {
     server {
         listen       80 default_server;
         listen       [::]:80 default_server;
-        server_name  santoshk.dev;
+        server_name  {{ fqdn }};
         root         /usr/share/nginx/html;
 
         # Load configuration files for the default server block.

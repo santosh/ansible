@@ -1,5 +1,5 @@
 server {
-    server_name ci.santoshk.dev;
+    server_name ci.{{ fqdn }};
     location / {
         proxy_pass http://localhost:8080/;
     }

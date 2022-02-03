@@ -4,7 +4,7 @@
   when: ansible_os_family == "RedHat"
 
 - name: copy nginx.conf
-  copy: src=nginx.conf dest=/etc/nginx/nginx.conf mode=preserve
+  template: src=nginx.conf.j2 dest=/etc/nginx/nginx.conf mode=preserve
   notify: restart nginx
 
 - name: start nginx and enable at startup
