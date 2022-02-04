@@ -4,4 +4,5 @@
   hosts:
     - web
   roles:
+    - certbot
     - nginx

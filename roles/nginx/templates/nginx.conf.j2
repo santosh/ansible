@@ -17,6 +17,8 @@ http {
 
     access_log  /var/log/nginx/access.log  main;
 
+    server_tokens       off;
+    ssl_protocols       TLSv1.2 TLSv1.3;
     sendfile            on;
     tcp_nopush          on;
     tcp_nodelay         on;
@@ -39,6 +41,17 @@ http {
 
         # Load configuration files for the default server block.
         include /etc/nginx/default.d/*.conf;
+
+        listen       443 ssl;
+
+        ssl_certificate /etc/letsencrypt/live/{{ fqdn }}/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/{{ fqdn }}/privkey.pem;
+
+
+        # redirect non-https traffic to https
+        if ($scheme != "https") {
+            return 301 https://$host$request_uri;
+        }
 
         error_page 404 /404.html;
             location = /40x.html {

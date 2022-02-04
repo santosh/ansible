@@ -1,5 +1,11 @@
 server {
     server_name ci.{{ fqdn }};
+
+    listen       443 ssl;
+
+    ssl_certificate /etc/letsencrypt/live/{{ fqdn }}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/{{ fqdn }}/privkey.pem;
+
     location / {
         proxy_pass http://localhost:8080/;
     }
