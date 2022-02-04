@@ -1,0 +1,10 @@
+- include: debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: create /etc/letsencrypt
+  file: path=/etc/letsencrypt state=directory recurse=yes
+- name: copy cloudflare.ini
+  template: src=cloudflare.ini.j2 dest=/etc/letsencrypt/cloudflare.ini
+- name: run certbot
+  command: certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini --email '{{ letsencrypt_email }}' --domain '*.{{ fqdn }}' --agree-tos --non-interactive
+
