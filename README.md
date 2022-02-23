@@ -1,10 +1,15 @@
-# personal-ansible-configs
+# ansible-configs
 
-EC2 is my new home. This is how I orchestrate my fleet.
+Ansible configs for my personal projects.
 
 ## Packages
 
 1. **nginx**: Nginx listens on 80. Current configuration expects Jenkins to be running on 8080.
 2. **jenkins**: To configure the pipeline from GitHub.
-3. **rabbitmq**: Experimental purpose.
-4. **elasticsearch**: To track uptime of nodes. Logs from above daemons.
+3. **certbot**: To fetch HTTPS certs.
+4. **docker**: To make docker builds inside Jenkins.
+5. **rabbitmq**: Experimental purpose.
+
+## Platform Support
+
+Most of the configuration here are tested against Ubuntu 20.04 LTS (arm64).
