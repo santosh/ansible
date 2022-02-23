@@ -1,0 +1,7 @@
+---
+- name: install, start and enable docker
+  become: yes
+  hosts:
+    - jenkins
+  roles:
+    - docker

@@ -1,0 +1,19 @@
+- include: debian.yml
+  when: ansible_os_family == "Debian"
+# - include: redhat.yml
+#   when: ansible_os_family == "RedHat"
+
+- name: Install Docker
+  package:
+    name: docker-ce
+    state: present
+  notify: restart docker
+
+- name: Start and enable service
+  service:
+    name: docker
+    state: started
+    enabled: true
+
+- include_tasks: docker-users.yml
+  when: docker_users | length > 0

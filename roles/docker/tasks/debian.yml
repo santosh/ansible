@@ -1,0 +1,22 @@
+- name: remove older version of docker if already installed
+  package:
+    name: ["docker", "docker-engine"]
+    state: absent
+
+- name: install dependencies
+  apt:
+    name: ["apt-transport-https", "ca-certificates", "curl", "software-properties-common"]
+    state: present
+
+- name: add Docker gpg key
+  apt_key:
+    url: "{{ docker_apt_gpg_key }}"
+    id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    state: present
+  ignore_errors: true
+
+- name: add Docker repository
+  apt_repository:
+    repo: "{{ docker_apt_repository }}"
+    state: present
+    update_cache: yes

@@ -1,0 +1,7 @@
+---
+- name: Add required users to docker group
+  user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  with_items: "{{ docker_users }}"
