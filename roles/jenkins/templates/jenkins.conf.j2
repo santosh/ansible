@@ -6,12 +6,14 @@ server {
     ssl_certificate /etc/letsencrypt/live/{{ fqdn }}/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/{{ fqdn }}/privkey.pem;
 
+    access_log            /var/log/nginx/jenkins.access.log;
+    error_log             /var/log/nginx/jenkins.error.log;
+
     location / {
-        proxy_pass         http://localhost:8080/;
-        
-        proxy_set_header   Host              $host;
-        proxy_set_header   X-Real-IP         $remote_addr;
-        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto $scheme;
+        include /etc/nginx/proxy_params;
+        proxy_pass          http://localhost:8080;
+        proxy_read_timeout  90s;
+        # Fix potential "It appears that your reverse proxy setup is broken" error.
+        proxy_redirect      http://localhost:8080 https://ci.santoshk.dev;
     }
 }
