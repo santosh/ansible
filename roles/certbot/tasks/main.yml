@@ -7,4 +7,8 @@
   template: src=cloudflare.ini.j2 dest=/etc/letsencrypt/cloudflare.ini
 - name: run certbot
   command: certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini --email '{{ letsencrypt_email }}' --domain '*.{{ fqdn }}' --agree-tos --non-interactive
-
+- name: cron to renew certificates
+  ansible.builtin.cron:
+    name: renew certificates
+    special_time: monthly
+    job: certbot certonly --dns-cloudflare --dns-cloudflare-credentials /etc/letsencrypt/cloudflare.ini --email '{{ letsencrypt_email }}' --domain '*.{{ fqdn }}' --agree-tos --non-interactive
