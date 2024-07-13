@@ -1,0 +1,16 @@
+- include_tasks: debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: Create a directory to mount the NFS share
+  file:
+    path: "{{ nas_mount_path }}"
+    state: directory
+
+- name: Add the NFS mount to /etc/fstab
+  lineinfile:
+    path: /etc/fstab
+    line: "{{ nfs_server }}:/{{ nfs_share }} {{ nas_mount_path }} nfs defaults,timeo=900,retrans=5,_netdev 0 0"
+    state: present
+
+- name: Mount all filesystems in /etc/fstab
+  command: mount -a

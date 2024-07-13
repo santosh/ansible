@@ -1,6 +1,6 @@
 # ansible-configs
 
-Ansible configs for my personal projects.
+Ansible configs that manages my infrastructure at home and cloud.
 
 ## Packages
 
@@ -9,6 +9,7 @@ Ansible configs for my personal projects.
 3. **certbot**: To fetch HTTPS certs.
 4. **docker**: To make docker builds inside Jenkins.
 5. **rabbitmq**: Experimental purpose.
+6. **nfs**: Install and configure NFS clients to use home based NAS.
 
 ## How to run a playbook
 

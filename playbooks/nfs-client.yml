@@ -1,0 +1,7 @@
+- name: install nfs-client and mount with fstab entry
+  become: yes
+  hosts:
+    - proxmoxvms
+    - vagrantvms
+  roles:
+    - nfs-client
