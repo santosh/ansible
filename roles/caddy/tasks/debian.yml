@@ -28,3 +28,18 @@
 
 - name: install caddy on debian
   apt: name=caddy state=present update_cache=yes
+
+# The apt package ships vanilla caddy with no DNS provider modules. Overwrite
+# its binary with a build that adds the cloudflare module, needed for DNS-01
+# challenges against caddy_public_fqdn. A future `apt upgrade` of the caddy
+# package will silently revert this file to vanilla again - re-running this
+# role restores the custom build, since get_url only redeploys on checksum
+# mismatch.
+- name: download caddy build with cloudflare dns plugin
+  get_url:
+    url: "https://caddyserver.com/api/download?os=linux&arch={{ 'arm64' if ansible_architecture == 'aarch64' else 'amd64' }}&p=github.com%2Fcaddy-dns%2Fcloudflare"
+    dest: /usr/bin/caddy
+    owner: root
+    group: root
+    mode: "0755"
+  notify: restart caddy

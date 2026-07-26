@@ -8,3 +8,9 @@
     name: caddy
     state: reloaded
     enabled: yes
+
+- name: restart caddy
+  service:
+    name: caddy
+    state: restarted
+    enabled: yes

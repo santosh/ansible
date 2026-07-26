@@ -6,53 +6,71 @@
   register: caddy_ts_status
   changed_when: false
 
-- name: create tailscale cert directory
+- name: stop and disable old tailscale-cert renewal timer
+  service:
+    name: tailscale-cert.timer
+    state: stopped
+    enabled: no
+  failed_when: false
+
+- name: remove old tailscale-cert systemd units
   file:
-    path: "{{ caddy_cert_dir }}"
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /etc/systemd/system/tailscale-cert.service
+    - /etc/systemd/system/tailscale-cert.timer
+  notify: reload systemd
+
+- name: remove old tailscale-issued certificate directory
+  file:
+    path: /var/lib/caddy/tailscale
+    state: absent
+
+- name: create caddy systemd override directory
+  file:
+    path: /etc/systemd/system/caddy.service.d
+    state: directory
+    mode: "0755"
+
+- name: install caddy systemd override for cloudflare token
+  template:
+    src: caddy-cloudflare-token.conf.j2
+    dest: /etc/systemd/system/caddy.service.d/override.conf
+    mode: "0644"
+  notify:
+    - reload systemd
+    - restart caddy
+
+- name: flush handlers so the override is active before caddy first starts
+  meta: flush_handlers
+
+- name: create caddy log directory
+  file:
+    path: /var/log/caddy
     state: directory
     owner: caddy
     group: caddy
     mode: "0750"
 
-- name: install tailscale cert renewal unit
-  template: src=tailscale-cert.service.j2 dest=/etc/systemd/system/tailscale-cert.service mode=0644
-  notify: reload systemd
-
-- name: install tailscale cert renewal timer
-  template: src=tailscale-cert.timer.j2 dest=/etc/systemd/system/tailscale-cert.timer mode=0644
-  notify: reload systemd
-
-- name: flush handlers so the units exist before first run
-  meta: flush_handlers
-
-- name: issue tailscale certificate
-  command: >-
-    tailscale cert
-    --cert-file {{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.crt
-    --key-file {{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.key
-    {{ caddy_tailnet_fqdn }}
-  args:
-    creates: "{{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.crt"
-
-- name: make certificate readable by caddy
+- name: ensure access log exists owned by caddy before validate touches it
   file:
-    path: "{{ item }}"
+    path: /var/log/caddy/access.log
+    state: touch
     owner: caddy
     group: caddy
     mode: "0640"
-  loop:
-    - "{{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.crt"
-    - "{{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.key"
-
-- name: enable tailscale cert renewal timer
-  service: name=tailscale-cert.timer state=started enabled=yes
+    access_time: preserve
+    modification_time: preserve
 
 - name: copy Caddyfile
   template:
     src: Caddyfile.j2
     dest: /etc/caddy/Caddyfile
     mode: "0644"
-    validate: caddy validate --adapter caddyfile --config %s
+    validate: >-
+      bash -c 'set -a; source {{ caddy_cloudflare_env_file }}; set +a;
+      caddy validate --adapter caddyfile --config %s'
   notify: reload caddy
 
 - name: start caddy and enable at startup
