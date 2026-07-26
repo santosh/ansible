@@ -1,0 +1,35 @@
+# {{ ansible_managed }}
+# Reverse proxy for the tailnet. Reachable only over Tailscale.
+
+{
+	admin off
+}
+
+{{ caddy_tailnet_fqdn }} {
+{% if caddy_bind_address %}
+	bind {{ caddy_bind_address }}
+{% endif %}
+	tls {{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.crt {{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.key
+
+	encode zstd gzip
+
+	log {
+		output file /var/log/caddy/access.log
+		format console
+	}
+
+{% for site in caddy_sites %}
+	handle_path {{ site.path }}/* {
+		reverse_proxy {{ site.upstream }} {
+{% if site.host_header is defined %}
+			header_up Host {{ site.host_header }}
+{% endif %}
+			header_up X-Forwarded-Host {host}
+		}
+	}
+
+{% endfor %}
+	handle {
+		respond "caddy on {{ inventory_hostname }} - routes:{% for site in caddy_sites %} {{ site.path }}{% endfor %}" 200
+	}
+}

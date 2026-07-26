@@ -1,0 +1,23 @@
+---
+# MagicDNS name this node serves TLS for. `tailscale cert` can only issue
+# certificates for the node's own DNS name.
+caddy_tailnet_fqdn: "{{ inventory_hostname }}.rohu-nunki.ts.net"
+
+# Where the tailscale-issued cert/key are written, and how often they are renewed.
+caddy_cert_dir: /var/lib/caddy/tailscale
+caddy_cert_renew_oncalendar: daily
+
+# Bind only to the tailnet address so nothing is exposed on the public interface.
+# Set to "" to listen on all interfaces instead.
+caddy_bind_address: "{{ ansible_tailscale0.ipv4.address | default('') }}"
+
+# Reverse proxy routes, served under https://{{ caddy_tailnet_fqdn }}/<path>.
+# `upstream` may be any address reachable *from oracle* - a tailnet peer or
+# a service on oracle itself (127.0.0.1:port).
+caddy_sites:
+  - path: /ollama
+    upstream: 100.125.231.39:11434
+    # Ollama validates Host; send it what it expects rather than the tailnet FQDN.
+    host_header: 127.0.0.1:11434
+  - path: /cockpit
+    upstream: 100.125.231.39:9090

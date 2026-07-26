@@ -11,3 +11,8 @@ mangalyaan ansible_host=10.100.200.14
 [vagrantvms]
 proteus ansible_host=10.100.200.31 ansible_user=vagrant ansible_ssh_private_key_file=~/workspace/vagrant-vms/k3s-proteus/.vagrant/machines/proteus/virtualbox/private_key
 triton ansible_host=10.100.200.32 ansible_user=vagrant ansible_ssh_private_key_file=~/workspace/vagrant-vms/swarm-triton/.vagrant/machines/triton/virtualbox/private_key
+
+# Reached over tailscale, not the 10.100.200.0/24 LAN. The inventory name must
+# match the MagicDNS name, since roles/caddy derives its FQDN from it.
+[proxy]
+hermes-agent ansible_host=100.101.219.67 ansible_user=ubuntu ansible_ssh_private_key_file=~/.ssh/ssh-key-priv-oracle.key

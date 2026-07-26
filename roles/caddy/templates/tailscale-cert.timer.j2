@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+[Unit]
+Description=Renew tailscale TLS certificate for {{ caddy_tailnet_fqdn }}
+
+[Timer]
+OnCalendar={{ caddy_cert_renew_oncalendar }}
+Persistent=true
+RandomizedDelaySec=1h
+
+[Install]
+WantedBy=timers.target

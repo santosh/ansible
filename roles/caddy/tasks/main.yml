@@ -1,0 +1,59 @@
+- include_tasks: debian.yml
+  when: ansible_os_family == "Debian"
+
+- name: fail early if tailscale is not up
+  command: tailscale status --json
+  register: caddy_ts_status
+  changed_when: false
+
+- name: create tailscale cert directory
+  file:
+    path: "{{ caddy_cert_dir }}"
+    state: directory
+    owner: caddy
+    group: caddy
+    mode: "0750"
+
+- name: install tailscale cert renewal unit
+  template: src=tailscale-cert.service.j2 dest=/etc/systemd/system/tailscale-cert.service mode=0644
+  notify: reload systemd
+
+- name: install tailscale cert renewal timer
+  template: src=tailscale-cert.timer.j2 dest=/etc/systemd/system/tailscale-cert.timer mode=0644
+  notify: reload systemd
+
+- name: flush handlers so the units exist before first run
+  meta: flush_handlers
+
+- name: issue tailscale certificate
+  command: >-
+    tailscale cert
+    --cert-file {{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.crt
+    --key-file {{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.key
+    {{ caddy_tailnet_fqdn }}
+  args:
+    creates: "{{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.crt"
+
+- name: make certificate readable by caddy
+  file:
+    path: "{{ item }}"
+    owner: caddy
+    group: caddy
+    mode: "0640"
+  loop:
+    - "{{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.crt"
+    - "{{ caddy_cert_dir }}/{{ caddy_tailnet_fqdn }}.key"
+
+- name: enable tailscale cert renewal timer
+  service: name=tailscale-cert.timer state=started enabled=yes
+
+- name: copy Caddyfile
+  template:
+    src: Caddyfile.j2
+    dest: /etc/caddy/Caddyfile
+    mode: "0644"
+    validate: caddy validate --adapter caddyfile --config %s
+  notify: reload caddy
+
+- name: start caddy and enable at startup
+  service: name=caddy state=started enabled=yes

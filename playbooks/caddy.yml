@@ -1,0 +1,7 @@
+---
+- name: install, start and enable caddy
+  become: yes
+  hosts:
+    - proxy
+  roles:
+    - caddy

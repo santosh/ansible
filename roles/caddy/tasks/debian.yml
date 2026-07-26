@@ -1,0 +1,30 @@
+- name: install prerequisites for the caddy apt repo
+  apt:
+    name:
+      - debian-keyring
+      - debian-archive-keyring
+      - apt-transport-https
+      - curl
+      - gpg
+    state: present
+    update_cache: yes
+
+- name: fetch caddy repo signing key
+  get_url:
+    url: https://dl.cloudsmith.io/public/caddy/stable/gpg.key
+    dest: /tmp/caddy-stable.asc
+    mode: "0644"
+
+- name: dearmor caddy repo signing key
+  command: gpg --batch --yes --dearmor -o /usr/share/keyrings/caddy-stable-archive-keyring.gpg /tmp/caddy-stable.asc
+  args:
+    creates: /usr/share/keyrings/caddy-stable-archive-keyring.gpg
+
+- name: add caddy apt repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/caddy-stable-archive-keyring.gpg] https://dl.cloudsmith.io/public/caddy/stable/deb/debian any-version main"
+    filename: caddy-stable
+    state: present
+
+- name: install caddy on debian
+  apt: name=caddy state=present update_cache=yes
