@@ -31,7 +31,7 @@
 
 # The apt package ships vanilla caddy with no DNS provider modules. Overwrite
 # its binary with a build that adds the cloudflare module, needed for DNS-01
-# challenges against caddy_public_fqdn. A future `apt upgrade` of the caddy
+# challenges against every fqdn in caddy_vhosts. A future `apt upgrade` of the
 # package will silently revert this file to vanilla again - re-running this
 # role restores the custom build, since get_url only redeploys on checksum
 # mismatch.

@@ -1,25 +1,34 @@
 ---
-# Public domain this node terminates TLS for. Validated via a Cloudflare
-# DNS-01 challenge, so no inbound port 80/443 is ever required - the domain
-# can (and should) still resolve only to this node's tailnet address.
-caddy_public_fqdn: "hermes-agent.muresine.top"
-
 # Path to a file containing `CLOUDFLARE_API_TOKEN=...`, scoped to DNS edit on
-# the zone for caddy_public_fqdn. Deployed to the host out-of-band, never
-# through ansible, so the token itself never passes through this repo.
+# the zone(s) covering every fqdn in caddy_vhosts. Deployed to the host
+# out-of-band, never through ansible, so the token itself never passes
+# through this repo.
 caddy_cloudflare_env_file: /etc/caddy/cloudflare.env
 
 # Bind only to the tailnet address so nothing is exposed on the public interface.
 # Set to "" to listen on all interfaces instead.
 caddy_bind_address: "{{ ansible_tailscale0.ipv4.address | default('') }}"
 
-# Reverse proxy routes, served under https://{{ caddy_public_fqdn }}/<path>.
+# One Caddy site block per fqdn. Each is validated via Cloudflare DNS-01, so
+# no inbound port 80/443 is ever required - the domain can (and should)
+# still resolve only to this node's tailnet address.
+#
+# A vhost with `sites` gets path-prefix routing (prefix stripped before
+# proxying, like the classic reverse-proxy-under-one-domain setup). A vhost
+# with a bare `upstream` gets the whole domain proxied as-is - use this for
+# backends (like SPAs) that build absolute URLs and would break if a path
+# prefix were stripped out from under them.
+#
 # `upstream` may be any address reachable *from oracle* - a tailnet peer or
 # a service on oracle itself (127.0.0.1:port).
-caddy_sites:
-  - path: /ollama
-    upstream: 100.125.231.39:11434
-    # Ollama validates Host; send it what it expects rather than the public fqdn.
-    host_header: 127.0.0.1:11434
-  - path: /cockpit
-    upstream: 100.125.231.39:9090
+caddy_vhosts:
+  - fqdn: hermes-agent.muresine.top
+    sites:
+      - path: /ollama
+        upstream: 100.125.231.39:11434
+        # Ollama validates Host; send it what it expects rather than the public fqdn.
+        host_header: 127.0.0.1:11434
+      - path: /cockpit
+        upstream: 100.125.231.39:9090
+  - fqdn: vikunja.muresine.top
+    upstream: 100.118.241.39:4444

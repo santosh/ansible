@@ -1,8 +1,12 @@
 # {{ ansible_managed }}
 # Reverse proxy for the tailnet. Reachable only over Tailscale, even though
-# the domain itself is public - see caddy_bind_address.
+# the domains themselves are public - see caddy_bind_address.
 
-{{ caddy_public_fqdn }} {
+{% for vhost in caddy_vhosts %}
+{% if not loop.first %}
+
+{% endif %}
+{{ vhost.fqdn }} {
 {% if caddy_bind_address %}
 	bind {{ caddy_bind_address }}
 {% endif %}
@@ -13,11 +17,12 @@
 	encode zstd gzip
 
 	log {
-		output file /var/log/caddy/access.log
+		output file /var/log/caddy/access-{{ vhost.fqdn }}.log
 		format console
 	}
 
-{% for site in caddy_sites %}
+{% if vhost.sites is defined %}
+{% for site in vhost.sites %}
 	handle_path {{ site.path }}/* {
 		reverse_proxy {{ site.upstream }} {
 {% if site.host_header is defined %}
@@ -29,6 +34,10 @@
 
 {% endfor %}
 	handle {
-		respond "caddy on {{ inventory_hostname }} - routes:{% for site in caddy_sites %} {{ site.path }}{% endfor %}" 200
+		respond "caddy on {{ inventory_hostname }} - routes:{% for site in vhost.sites %} {{ site.path }}{% endfor %}" 200
 	}
+{% else %}
+	reverse_proxy {{ vhost.upstream }}
+{% endif %}
 }
+{% endfor %}

@@ -2,26 +2,32 @@
 
 Reverse proxy for the tailnet, running on `hermes-agent` (the `oracle` ssh alias).
 
-Serves `https://hermes-agent.rohu-nunki.ts.net/` using a certificate issued by
-`tailscale cert`, renewed by a systemd timer. Caddy's own ACME client is not used
-— a `.ts.net` name has no public DNS record, so Let's Encrypt cannot validate it
-directly; Tailscale issues the cert instead.
-
-Caddy binds to the tailnet address only, so nothing is published on the host's
-public interface.
+Each site in `caddy_vhosts` gets its own public fqdn with a cert issued via
+Cloudflare DNS-01 (no port 80/443 inbound needed to validate). The domains
+resolve publicly, but Caddy binds only to the tailnet address
+(`caddy_bind_address`), so nothing is actually reachable off the tailnet.
 
 ## Routes
 
-Defined by `caddy_sites` in `defaults/main.yml`, served as path prefixes:
+Defined by `caddy_vhosts` in `defaults/main.yml`:
 
-| Path       | Upstream                | What |
-|------------|-------------------------|------|
-| `/ollama`  | `100.125.231.39:11434`  | Ollama on titan |
-| `/cockpit` | `100.125.231.39:9090`   | Cockpit on titan |
+| Fqdn                        | Routing      | Path       | Upstream               | What               |
+|-----------------------------|--------------|------------|------------------------|--------------------|
+| `hermes-agent.muresine.top` | path prefix  | `/ollama`  | `100.125.231.39:11434` | Ollama on titan    |
+| `hermes-agent.muresine.top` | path prefix  | `/cockpit` | `100.125.231.39:9090`  | Cockpit on titan   |
+| `vikunja.muresine.top`      | whole domain | —          | `100.118.241.39:4444`  | Vikunja on voyager |
 
-Add a route by appending to `caddy_sites`. `upstream` must be reachable *from*
-hermes-agent — a tailnet peer, or `127.0.0.1:<port>` for a service on the box
-itself. Set `host_header` when the backend validates the `Host` header.
+A vhost with `sites` gets path-prefix routing (`handle_path`, prefix stripped
+before proxying) — add a route by appending to that vhost's `sites` list. A
+vhost with a bare `upstream` proxies the whole domain instead; use this for
+backends that build absolute URLs, since path-prefix stripping breaks those.
+
+`upstream` must be reachable *from* hermes-agent — a tailnet peer, or
+`127.0.0.1:<port>` for a service on the box itself. Set `host_header` when the
+backend validates the `Host` header. Adding a new fqdn also needs a DNS A/AAAA
+record for it pointing at hermes-agent's tailnet IP (Cloudflare, out-of-band —
+not managed by this role), since Caddy only handles TLS/proxying, not the
+record itself.
 
 ## Run
 
@@ -34,8 +40,9 @@ first; run `ssh oracle` once interactively and complete the auth URL.
 
 - **Cockpit** rejects proxied requests unless the origin is allowlisted. On titan:
   `sudo mkdir -p /etc/systemd/system/cockpit.socket.d` and set
-  `Origins = https://hermes-agent.rohu-nunki.ts.net` in cockpit.conf, or it will
+  `Origins = https://hermes-agent.muresine.top` in cockpit.conf, or it will
   return "connection refused" through the proxy.
-- Path-prefix routing strips the prefix (`handle_path`). Backends that generate
-  absolute URLs may need subdomain routing instead — that requires extra MagicDNS
-  names, which a single node does not get by default.
+- Path-prefix routing strips the prefix (`handle_path`), which breaks backends
+  that generate absolute URLs. Give those their own fqdn with a bare `upstream`
+  instead — the certs come from Cloudflare DNS-01, so a new subdomain only needs
+  a DNS record, not a MagicDNS name.
