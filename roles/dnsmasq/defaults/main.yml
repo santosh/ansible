@@ -1,0 +1,17 @@
+---
+# Bind only to the tailnet address. This host also has a public-facing
+# interface, and a resolver listening there would be an open DNS amplifier -
+# so an empty value is treated as a hard error rather than "listen on
+# everything", which is what dnsmasq would otherwise do.
+dnsmasq_bind_address: "{{ ansible_tailscale0.ipv4.address | default('') }}"
+
+# The zone served to the tailnet. Registered in the Tailscale admin console
+# under DNS > Split DNS, pointing at dnsmasq_bind_address, so only queries for
+# this domain ever reach here - everything else keeps using MagicDNS and the
+# tailnet's normal resolvers.
+dnsmasq_domain: muresine.top
+
+# Where every name under dnsmasq_domain points. This is caddy, which runs on
+# this same host and does the actual per-service routing, so a new service
+# needs a vhost in roles/caddy and no DNS record anywhere.
+dnsmasq_wildcard_target: "{{ dnsmasq_bind_address }}"

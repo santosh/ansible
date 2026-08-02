@@ -1,0 +1,19 @@
+# {{ ansible_managed }}
+# Split-DNS resolver for the tailnet. Answers {{ dnsmasq_domain }} and nothing
+# else; Tailscale only routes that domain here.
+
+# Bind to the tailnet address alone. bind-dynamic rather than bind-interfaces
+# so a reboot that brings tailscale0 up after dnsmasq still works.
+listen-address={{ dnsmasq_bind_address }}
+bind-dynamic
+
+# Every name under the zone resolves to caddy, which owns the routing. Adding
+# a service means adding a vhost in roles/caddy - never a DNS record.
+address=/{{ dnsmasq_domain }}/{{ dnsmasq_wildcard_target }}
+
+# No upstream, no recursion, no /etc/hosts. This resolver exists to answer one
+# zone; anything else it might be asked is not its business to forward.
+no-resolv
+no-hosts
+domain-needed
+bogus-priv

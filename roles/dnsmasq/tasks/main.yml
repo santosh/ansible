@@ -1,0 +1,33 @@
+- name: fail early if tailscale is not up
+  command: tailscale status --json
+  register: dnsmasq_ts_status
+  changed_when: false
+
+# Without this, an empty bind address renders a config that dnsmasq happily
+# accepts and then listens on every interface - including the public one.
+- name: refuse to configure a resolver with no tailnet address
+  assert:
+    that: dnsmasq_bind_address | length > 0
+    fail_msg: >-
+      dnsmasq_bind_address is empty, so dnsmasq would bind every interface on
+      a host with a public address. Refusing to continue.
+
+- name: install dnsmasq
+  apt:
+    name: dnsmasq
+    state: present
+    update_cache: yes
+
+- name: configure the tailnet resolver
+  template:
+    src: tailnet.conf.j2
+    dest: /etc/dnsmasq.d/tailnet.conf
+    mode: "0644"
+    validate: dnsmasq --test --conf-file=%s
+  notify: restart dnsmasq
+
+- name: start dnsmasq and enable at startup
+  service:
+    name: dnsmasq
+    state: started
+    enabled: yes
