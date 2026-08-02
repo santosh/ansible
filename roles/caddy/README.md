@@ -11,16 +11,13 @@ resolve publicly, but Caddy binds only to the tailnet address
 
 Defined by `caddy_vhosts` in `defaults/main.yml`:
 
-| Fqdn                        | Routing      | Path       | Upstream               | What               |
-|-----------------------------|--------------|------------|------------------------|--------------------|
-| `hermes-agent.muresine.top` | path prefix  | `/ollama`  | `100.125.231.39:11434` | Ollama on titan    |
-| `hermes-agent.muresine.top` | path prefix  | `/cockpit` | `100.125.231.39:9090`  | Cockpit on titan   |
-| `vikunja.muresine.top`      | whole domain | —          | `100.118.241.39:4444`  | Vikunja on voyager |
+| Fqdn                   | Upstream              | What               |
+|------------------------|-----------------------|--------------------|
+| `vikunja.muresine.top` | `100.118.241.39:4444` | Vikunja on voyager |
 
-A vhost with `sites` gets path-prefix routing (`handle_path`, prefix stripped
-before proxying) — add a route by appending to that vhost's `sites` list. A
-vhost with a bare `upstream` proxies the whole domain instead; use this for
-backends that build absolute URLs, since path-prefix stripping breaks those.
+Every service gets its own subdomain and is proxied whole — there is no
+path-prefix routing. Add a service by appending an `fqdn`/`upstream` pair to
+`caddy_vhosts`.
 
 `upstream` must be reachable *from* hermes-agent — a tailnet peer, or
 `127.0.0.1:<port>` for a service on the box itself. Set `host_header` when the
@@ -38,11 +35,9 @@ first; run `ssh oracle` once interactively and complete the auth URL.
 
 ## Caveats
 
-- **Cockpit** rejects proxied requests unless the origin is allowlisted. On titan:
-  `sudo mkdir -p /etc/systemd/system/cockpit.socket.d` and set
-  `Origins = https://hermes-agent.muresine.top` in cockpit.conf, or it will
-  return "connection refused" through the proxy.
-- Path-prefix routing strips the prefix (`handle_path`), which breaks backends
-  that generate absolute URLs. Give those their own fqdn with a bare `upstream`
-  instead — the certs come from Cloudflare DNS-01, so a new subdomain only needs
-  a DNS record, not a MagicDNS name.
+- Backends that check the `Host` header (Ollama, for one) reject the public
+  fqdn — set `host_header` on that vhost to whatever the backend expects.
+- Some backends also refuse proxied requests unless the origin is allowlisted.
+  Cockpit is the usual example: it needs `Origins = https://<fqdn>` under
+  `/etc/systemd/system/cockpit.socket.d`, or it returns "connection refused"
+  through the proxy.

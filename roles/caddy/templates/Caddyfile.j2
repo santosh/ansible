@@ -21,23 +21,11 @@
 		format console
 	}
 
-{% if vhost.sites is defined %}
-{% for site in vhost.sites %}
-	handle_path {{ site.path }}/* {
-		reverse_proxy {{ site.upstream }} {
-{% if site.host_header is defined %}
-			header_up Host {{ site.host_header }}
+	reverse_proxy {{ vhost.upstream }} {
+{% if vhost.host_header is defined %}
+		header_up Host {{ vhost.host_header }}
 {% endif %}
-			header_up X-Forwarded-Host {host}
-		}
+		header_up X-Forwarded-Host {host}
 	}
-
-{% endfor %}
-	handle {
-		respond "caddy on {{ inventory_hostname }} - routes:{% for site in vhost.sites %} {{ site.path }}{% endfor %}" 200
-	}
-{% else %}
-	reverse_proxy {{ vhost.upstream }}
-{% endif %}
 }
 {% endfor %}
